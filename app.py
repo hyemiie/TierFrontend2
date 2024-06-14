@@ -18,8 +18,8 @@ import os
 
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tier_user:R1Jm8lPVucA19TvVgmZoJbhClWxyN6aA@dpg-cnl2fkol5elc73dopl7g-a.oregon-postgres.render.com/tier'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tier_user:R1Jm8lPVucA19TvVgmZoJbhClWxyN6aA@dpg-cnl2fkol5elc73dopl7g-a.oregon-postgres.render.com/tier'
  
 app.config['SECRET_KEY'] = 'your_strong_secret_key'  
 app.config["JWT_SECRET_KEY"] = 'your_jwt_secret_key'  
@@ -165,7 +165,9 @@ def add_to_cart():
             existing_product.productQuantity += PRODUCTQUANTITY
             existing_product.productPrice = PRODUCTPRICE
             db.session.commit()
-            print('Quantity updated.')
+            message ='Quantity updated.'
+            print(message)
+            # print('Quantity updated.')
             return jsonify({'message': 'Quantity updated'})
         else:
         # Add the product to the user's cart if it doesn't exist
@@ -264,7 +266,8 @@ def view_cart():
 
 @app.route('/api/cart/delete', methods=['DELETE'])
 def delete_from_cart():
-    product_id = request.args.get('product_id')  # Fix: Retrieve product_id from request parameters
+    product_id = request.args.get('product_id')
+    print('product id is' , product_id)  # Fix: Retrieve product_id from request parameters
 
     existing_product = CartProducts.query.filter_by(productID=product_id).first()
 
@@ -275,16 +278,11 @@ def delete_from_cart():
     else:
         return jsonify({"message": "Product doesn't exist"})
  
- 
 @app.route('/users')
 def users():
     UserLists = User.query.all()
     userLists = [user.__dict__ for user in UserLists]
     return jsonify(users=userLists)
-
-
-
-
 
  
 @app.route('/register', methods=['POST'])
@@ -310,6 +308,19 @@ def register():
         return jsonify({'message': 'User registered successfully'})
 
 
+@app.route('/get_name', methods=['GET'])
+@jwt_required()
+def get_name():
+    # Extract the user ID from the JWT
+    user_id = get_jwt_identity()
+    user = User.query.filter_by(id=user_id).first()
+
+    # Check if user exists
+    if user:
+        return jsonify({'message': 'User found', 'name': user.username})
+    else:
+        return jsonify({'message': 'User not found'}), 404
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
@@ -322,6 +333,37 @@ if __name__ == "__main__":
         # new_product = Products(  productName= 'Brown Sofa ' , productImage='images/Image7.jpg', productPrice='19000.00', productDesc='brown Sofa wih feathery ruffles'  )
         # db.session.add(new_product)
         # db.session.commit()
+
+        # new_product = Products(  productName= 'Table Drawer' , productImage='images/ProductImage8.png', productPrice='700.00', productDesc='Drawer' )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+        # new_product = Products(  productName= 'Single Chair' , productImage='images/ProductImage7.png', productPrice='820.00', productDesc='Chair'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+        # new_product = Products(  productName= 'Light Table Drawers' , productImage='images/ProductImage9.png', productPrice='79000.00', productDesc='Drawer'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+
+        # new_product = Products(  productName= ' BedSide Drawers' , productImage='images/ProductImage10.png', productPrice='21000.00', productDesc='Drawer'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+
+        # new_product = Products(  productName= 'Studio Desk' , productImage='images/ProductImage11.png', productPrice='92000.00', productDesc='Desk'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+        # new_product = Products(  productName= 'Sofia Lounge Chair' , productImage='images/ProductImage12.png', productPrice='8000.00', productDesc='Chair'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+
+
+
+
 
         # new_product = CartProducts( productID=6, user_id=5, productName= 'Blue Sofa ' , productImage='../Images//Image6.png', productPrice='17000.00', productDesc='Blue Sofa wih feathery ruffles', productQuantity = 2 )
         # db.session.add(new_product)
@@ -337,11 +379,9 @@ if __name__ == "__main__":
         # db.session.commit()
 
         # Populate User table
-        # new_user = User(username='Elizabeth' , cartProducts='[]')
-        # db.session.add(new_user)
-        # db.session.commit()
 
-        # db.session.query(CartProducts).delete()
+
+        # db.session.query(Products).delete()
         # db.session.commit()
         
 
