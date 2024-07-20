@@ -12,10 +12,11 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_bcrypt import Bcrypt
 from sqlalchemy.dialects.postgresql import JSON 
 import os
+import stripe
+from square.client import Client
 
-
-
-
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
@@ -28,6 +29,17 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 blacklist = set()  # Define the blacklist
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+client = Client(
+    access_token= os.getenv('ACCESS_TOKEN'),
+    environment='production'  # Use 'production' for live environment
+)
+
+
+YOUR_DOMAIN= "http://localhost:5000"
+
+
+
 
 # postgres://tier_user:R1Jm8lPVucA19TvVgmZoJbhClWxyN6aA@dpg-cnl2fkol5elc73dopl7g-a.oregon-postgres.render.com/tier
 CORS(app)
@@ -320,43 +332,97 @@ def get_name():
         return jsonify({'message': 'User found', 'name': user.username})
     else:
         return jsonify({'message': 'User not found'}), 404
+    
+
+# @app.route('/create-payment-intent', methods=['POST'])
+# def create_payments():
+#     try:
+#         data = json.loads(request.data)
+#         intent = stripe.PaymentIntent.create(
+#             amount=data['amount'],
+#             currency='usd'
+#         )
+#         return jsonify({
+#             'clientSecret': intent.client_secret
+#         })
+#     except Exception as e:
+#         return jsonify(error=str(e)), 403
+
+
+# @app.route('/checkoutSession', methods=['POST'])
+# def create_checkout_session():
+#     try:
+#         checkout_session = stripe.checkout.Session.create(
+#             line_items=[
+#                 {
+#                     'price': 'evt_1Pe1p5Rqu1K8wT3VwA613iW4',  # Replace with your actual Price ID
+#                     'quantity': 1,
+#                 },
+#             ],
+#             mode='subscription',
+#             success_url=YOUR_DOMAIN + '/success',
+#             cancel_url=YOUR_DOMAIN + '/cancel',
+#         )
+#         return jsonify({'sessionId': checkout_session.id})
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 400
+
+@app.route('/create-payment', methods=['POST'])
+def create_payment():
+    data = request.get_json()
+    nonce = data['nonce']
+    amount = data['amount']
+
+    result = client.payments.create_payment({
+        "idempotency_key": str(uuid4()),
+        "amount_money": {
+            "amount": amount,
+            "currency": "USD"
+        },
+        "source_id": nonce
+    })
+
+    if result.is_success():
+        return jsonify(result.body), 200
+    else:
+        return jsonify(result.errors), 400
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
         # Populate Products table
-        # new_Cart = Cart( productID = 2, productName= 'Fan Charger', productQuantity= 3  )
+        # new_Cart = Cart( productID = 2, productName= 'LunaGlow Serum', productQuantity= 3  )
         # db.session.add(new_Cart)
         # db.session.commit()
 
-        # new_product = Products(  productName= 'Brown Sofa ' , productImage='images/Image7.jpg', productPrice='19000.00', productDesc='brown Sofa wih feathery ruffles'  )
+        # new_product = Products(  productName= 'LunaGlow Serum' , productImage='images/product (2).png', productPrice='1900.00', productDesc='A lightweight, fast-absorbing serum infused with moonflower extract and vitamin C to brighten and even skin tone overnight.'  )
         # db.session.add(new_product)
         # db.session.commit()
 
-        # new_product = Products(  productName= 'Table Drawer' , productImage='images/ProductImage8.png', productPrice='700.00', productDesc='Drawer' )
+        # new_product = Products(  productName= 'AquaFresh Moisture Lock' , productImage='images/product (3).png', productPrice='700.00', productDesc=' A deeply hydrating cream that creates a protective barrier, locking in moisture for up to 48 hours while allowing skin to breathe.' )
         # db.session.add(new_product)
         # db.session.commit()
 
-        # new_product = Products(  productName= 'Single Chair' , productImage='images/ProductImage7.png', productPrice='820.00', productDesc='Chair'  )
+        # new_product = Products(  productName= 'NovaSkin Rejuvenator' , productImage='images/product (4).png', productPrice='820.00', productDesc='An advanced anti-aging treatment combining retinol and peptides to minimize fine lines and improve skin elasticity'  )
         # db.session.add(new_product)
         # db.session.commit()
 
-        # new_product = Products(  productName= 'Light Table Drawers' , productImage='images/ProductImage9.png', productPrice='79000.00', productDesc='Drawer'  )
-        # db.session.add(new_product)
-        # db.session.commit()
-
-
-        # new_product = Products(  productName= ' BedSide Drawers' , productImage='images/ProductImage10.png', productPrice='21000.00', productDesc='Drawer'  )
+        # new_product = Products(  productName= 'Bloom Face Mist' , productImage='images/product (5).png', productPrice='79000.00', productDesc='A refreshing botanical mist made with rose water and aloe vera to hydrate and revitalize skin throughout the day.'  )
         # db.session.add(new_product)
         # db.session.commit()
 
 
-        # new_product = Products(  productName= 'Studio Desk' , productImage='images/ProductImage11.png', productPrice='92000.00', productDesc='Desk'  )
+        # new_product = Products(productName= 'PureBalance Toner' , productImage='images/product (6).png', productPrice='21000.00', productDesc='An alcohol-free toner that restores skins natural pH balance and preps it for better absorption of subsequent skincare products.')
         # db.session.add(new_product)
         # db.session.commit()
 
-        # new_product = Products(  productName= 'Sofia Lounge Chair' , productImage='images/ProductImage12.png', productPrice='8000.00', productDesc='Chair'  )
+
+        # new_product = Products(  productName= 'HydraBoost Essence' , productImage='images/product (7).png', productPrice='92000.00', productDesc='A concentrated essence with multiple types of hyaluronic acid to provide deep, long-lasting hydration and plump the skin.'  )
+        # db.session.add(new_product)
+        # db.session.commit()
+
+        # new_product = Products(  productName= 'ZenDerm Calming Cream' , productImage='images/product1.png', productPrice='8000.00', productDesc='Formulated with chamomile and green tea extracts to soothe irritated skin and reduce redness, perfect for sensitive skin types.'  )
         # db.session.add(new_product)
         # db.session.commit()
 
