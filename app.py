@@ -22,8 +22,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tier_user:R1Jm8lPVucA19TvVgmZoJbhClWxyN6aA@dpg-cnl2fkol5elc73dopl7g-a.oregon-postgres.render.com/tier'
  
-app.config['SECRET_KEY'] = 'your_strong_secret_key'  
-app.config["JWT_SECRET_KEY"] = 'your_jwt_secret_key'  
+app.config['SECRET_KEY'] = os.getenv('AppSecretKey' ) 
+app.config["JWT_SECRET_KEY"] = os.getenv('JwtSecretkey' ) 
 app.config['JWT_TOKEN_LOCATION'] = ['headers' ]  
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -367,25 +367,25 @@ def get_name():
 #     except Exception as e:
 #         return jsonify({'error': str(e)}), 400
 
-@app.route('/create-payment', methods=['POST'])
-def create_payment():
-    data = request.get_json()
-    nonce = data['nonce']
-    amount = data['amount']
+# @app.route('/create-payment', methods=['POST'])
+# def create_payment():
+#     data = request.get_json()
+#     nonce = data['nonce']
+#     amount = data['amount']
 
-    result = client.payments.create_payment({
-        "idempotency_key": str(uuid4()),
-        "amount_money": {
-            "amount": amount,
-            "currency": "USD"
-        },
-        "source_id": nonce
-    })
+#     result = client.payments.create_payment({
+#         "idempotency_key": str(uuid4()),
+#         "amount_money": {
+#             "amount": amount,
+#             "currency": "USD"
+#         },
+#         "source_id": nonce
+#     })
 
-    if result.is_success():
-        return jsonify(result.body), 200
-    else:
-        return jsonify(result.errors), 400
+#     if result.is_success():
+#         return jsonify(result.body), 200
+#     else:
+#         return jsonify(result.errors), 400
 
 if __name__ == "__main__":
     with app.app_context():
