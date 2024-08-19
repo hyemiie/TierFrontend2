@@ -17,15 +17,19 @@ from square.client import Client
 
 from dotenv import load_dotenv
 import os
+from flask_migrate import Migrate
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tier_postgresql_user:wFBqmdrLyQud8QgmT5R0B3KhotQlUOBW@dpg-cr1m4ptds78s739u18e0-a.oregon-postgres.render.com/tier_postgresql'
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tier_user:R1Jm8lPVucA19TvVgmZoJbhClWxyN6aA@dpg-cnl2fkol5elc73dopl7g-a.oregon-postgres.render.com/tier'
  
 app.config['SECRET_KEY'] = os.getenv('AppSecretKey' ) 
 app.config["JWT_SECRET_KEY"] = os.getenv('JwtSecretkey' ) 
 app.config['JWT_TOKEN_LOCATION'] = ['headers' ]  
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 blacklist = set()  # Define the blacklist
@@ -49,10 +53,10 @@ CORS(app)
 
 class Products(db.Model):
     productID = db.Column(db.Integer, primary_key=True)
-    productName = db.Column(db.String(20), nullable=False)
-    productImage = db.Column(db.String(80), nullable=False)
-    productPrice = db.Column(db.String(80), nullable=False)
-    productDesc = db.Column(db.String(80), nullable=False)
+    productName = db.Column(db.String(80), nullable=False)
+    productImage = db.Column(db.String(225), nullable=False)
+    productPrice = db.Column(db.String(225), nullable=False)
+    productDesc = db.Column(db.String(225), nullable=False)
 
     def to_dict(self):
         return {
@@ -84,10 +88,10 @@ class User(db.Model, UserMixin):
 class CartProducts(db.Model):
     productID = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    productName = db.Column(db.String(20), unique=True, nullable=False)
-    productImage = db.Column(db.String(80), nullable=False)
-    productDesc = db.Column(db.String(80), nullable=False)
-    productPrice = db.Column(db.String(80), nullable=False)
+    productName = db.Column(db.String(80), unique=True, nullable=False)
+    productImage = db.Column(db.String(225), nullable=False)
+    productDesc = db.Column(db.String(225), nullable=False)
+    productPrice = db.Column(db.String(225), nullable=False)
     productQuantity = db.Column(db.Integer , nullable=False)
 
     def to_dict(self):
@@ -126,6 +130,7 @@ def index():
 @app.route('/products')
 def products():
     ProductsLists = Products.query.all()
+    print('ProductLists', ProductsLists)
     products_dict_list = [product.to_dict() for product in ProductsLists]
     return jsonify(products=products_dict_list)
  
